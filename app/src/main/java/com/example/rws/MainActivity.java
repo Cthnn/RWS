@@ -20,7 +20,11 @@ import android.widget.ImageView;
 
 public class MainActivity extends Activity {
     Uri imageUri;
-    Button addButton;
+    Button menuButton;
+    Button aButton;
+    Button rButton;
+    Button tButton;
+
     private static final int PICK_IMAGE = 100;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,40 +32,71 @@ public class MainActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         this.setContentView(R.layout.activity_main);
-        addButton = (Button)findViewById(R.id.button);
-        addButton.setOnClickListener(new View.OnClickListener() {
+        menuButton = (Button)findViewById(R.id.button);
+        aButton = (Button)findViewById(R.id.add);
+        rButton = (Button)findViewById(R.id.random);
+        tButton = (Button)findViewById(R.id.trash);
+        aButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LayoutInflater inflater = (MainActivity.this).getLayoutInflater();
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Set An Album Name")
-                        .setView(inflater.inflate(R.layout.album_create,null));
-                builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User clicked OK button
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
-                });
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                albumCreation();
             }
         });
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                menuClick();
+            }
+        });
+        rButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+        tButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+    }
+    private void menuClick(){
+        if(aButton.getVisibility() == View.VISIBLE){
+            aButton.setVisibility(View.INVISIBLE);
+            tButton.setVisibility(View.INVISIBLE);
+            rButton.setVisibility(View.INVISIBLE);
+        }else{
+            aButton.setVisibility(View.VISIBLE);
+            tButton.setVisibility(View.VISIBLE);
+            rButton.setVisibility(View.VISIBLE);
+        }
+
 
     }
-
     private void albumCreation(){
+        LayoutInflater inflater = (MainActivity.this).getLayoutInflater();
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setMessage("Album Name:")
-                .setTitle("Album Name");
+        builder.setTitle("Set An Album Name")
+                .setView(inflater.inflate(R.layout.album_create,null));
+        builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
+                MainActivity.this.startActivity(myIntent);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                return;
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
-    /*private void openGallery(){
+    private void openGallery(){
         Intent gallery = new Intent(Intent.ACTION_GET_CONTENT);
-        gallery.setType("");
+        gallery.setType("*/*");
         startActivityForResult(gallery,PICK_IMAGE);
     }
     @Override
@@ -74,6 +109,6 @@ public class MainActivity extends Activity {
             imageView.setImageURI(imageUri);
             layout.addView(imageView);
         }
-    }*/
+    }
 
 }
