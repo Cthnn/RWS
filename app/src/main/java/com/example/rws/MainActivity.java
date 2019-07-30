@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                return;
+                dialog.cancel();
             }
         });
         AlertDialog dialog = builder.create();
@@ -120,10 +120,31 @@ public class MainActivity extends Activity {
     }
     private void albumCreated(){
         for(Album album:albumList){
-            ImageView imageView = new ImageView(MainActivity.this);
+            AlbumView imageView = new AlbumView(MainActivity.this,album.getName());
             ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
             imageView.setImageURI(Uri.parse(album.getImage()));
             layout.addView(imageView);
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(((AlbumView)view).getSelect()){
+                        ((AlbumView)view).setSelect(false);
+                        view.setVisibility(View.INVISIBLE);
+                    }else{
+                        Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
+                        myIntent.putExtra("ALBUMS", albumList);
+                        myIntent.putExtra("NAME",((AlbumView)view).getAlbumName());
+                        MainActivity.this.startActivity(myIntent);
+                    }
+                }
+            });
+            imageView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    ((AlbumView)view).setSelect(true);
+                    return true;
+                }
+            });
         }
         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
         myIntent.putExtra("ALBUMS", albumList);

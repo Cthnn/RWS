@@ -17,6 +17,7 @@ public class Album implements Serializable {
     public void setImage(String image){
         this.uriString = image;
     }
+
     public String getName(){
         return name;
     }
@@ -26,4 +27,6 @@ public class Album implements Serializable {
     public ArrayList<String> getImages(){
         return images;
     }
+
+
 }
