@@ -5,11 +5,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
@@ -18,6 +20,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
@@ -78,21 +81,17 @@ public class MainActivity extends Activity {
 
     }
     private void albumCreation(){
-        final LayoutInflater inflater = (MainActivity.this).getLayoutInflater();
-        final View infView =inflater.inflate(R.layout.activity_album_page,null);
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        //LayoutInflater inflater = LayoutInflater.from(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Set An Album Name")
-                .setView(inflater.inflate(R.layout.album_create,null));
+                .setView(R.layout.album_create);
         builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
-                MainActivity.this.startActivity(myIntent);
+                Dialog dialogObj = Dialog.class.cast(dialog);
+                EditText nameField = (EditText)dialogObj.findViewById(R.id.nameField);
+                Album newAlbum = new Album(nameField.getText().toString());
+                albumList.add(newAlbum);
                 openGallery();
-                Album last = albumList.get(albumList.size()-1);
-                EditText nameField = infView.findViewById(R.id.nameField);
-                last.setName(nameField.getText().toString());
-                albumCreated();
-
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -113,17 +112,22 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data){
         super.onActivityResult(requestCode,resultCode,data);
         if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
-            ArrayList<Uri> images = new ArrayList<>();
             Uri imageUri = data.getData();
-            images.add(imageUri);
+            albumList.get(albumList.size()-1).getImages().add(imageUri.toString());
+            albumList.get(albumList.size()-1).setImage(imageUri.toString());
+            albumCreated();
         }
     }
     private void albumCreated(){
         for(Album album:albumList){
             ImageView imageView = new ImageView(MainActivity.this);
             ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
-            imageView.setImageURI(album.getImage());
+            imageView.setImageURI(Uri.parse(album.getImage()));
             layout.addView(imageView);
         }
+        Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
+        myIntent.putExtra("ALBUMS", albumList);
+        myIntent.putExtra("NAME",albumList.get(albumList.size()-1).getName());
+        MainActivity.this.startActivity(myIntent);
     }
 }

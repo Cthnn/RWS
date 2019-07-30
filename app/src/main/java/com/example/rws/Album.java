@@ -1,31 +1,29 @@
 package com.example.rws;
 
-import android.net.Uri;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Album {
+public class Album implements Serializable {
     protected String name;
-    protected Uri image;
-    protected ArrayList<Uri> images;
+    protected String uriString;
+    protected ArrayList<String> images = new ArrayList<>();
 
-    public Album(ArrayList<Uri> images){
-        this.images = images;
-        image = this.images.get(0);
+    public Album(String name){
+        this.name = name;
     }
     public void setName(String name){
         this.name = name;
     }
-    public void setImage(Uri image){
-        this.image = image;
+    public void setImage(String image){
+        this.uriString = image;
     }
     public String getName(){
         return name;
     }
-    public Uri getImage(){
-        return image;
+    public String getImage(){
+        return uriString;
     }
-    public ArrayList<Uri> getImages(){
+    public ArrayList<String> getImages(){
         return images;
     }
 }
