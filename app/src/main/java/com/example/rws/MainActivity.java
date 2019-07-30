@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
         aButton = (Button)findViewById(R.id.add);
         rButton = (Button)findViewById(R.id.random);
         tButton = (Button)findViewById(R.id.trash);
+        tButton.setEnabled(false);
         aButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -129,7 +130,9 @@ public class MainActivity extends Activity {
                 public void onClick(View view) {
                     if(((AlbumView)view).getSelect()){
                         ((AlbumView)view).setSelect(false);
-                        view.setVisibility(View.INVISIBLE);
+                        findAlbum(((AlbumView)view).getAlbumName()).setSelect(false);
+                        updateTrashButton();
+
                     }else{
                         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
                         myIntent.putExtra("ALBUMS", albumList);
@@ -142,6 +145,8 @@ public class MainActivity extends Activity {
                 @Override
                 public boolean onLongClick(View view) {
                     ((AlbumView)view).setSelect(true);
+                    findAlbum(((AlbumView)view).getAlbumName()).setSelect(true);
+                    updateTrashButton();
                     return true;
                 }
             });
@@ -150,5 +155,29 @@ public class MainActivity extends Activity {
         myIntent.putExtra("ALBUMS", albumList);
         myIntent.putExtra("NAME",albumList.get(albumList.size()-1).getName());
         MainActivity.this.startActivity(myIntent);
+    }
+    private void updateTrashButton(){
+        if(checkTrashButton()){
+            tButton.setEnabled(true);
+
+        }else{
+            tButton.setEnabled(false);
+        }
+    }
+    private Boolean checkTrashButton(){
+        for (Album album:albumList){
+            if(album.getSelect()){
+                return true;
+            }
+        }
+        return false;
+    }
+    private Album findAlbum(String aName){
+        for (Album album:albumList){
+            if(album.getName().equals(aName)){
+                return album;
+            }
+        }
+        return null;
     }
 }

@@ -7,6 +7,7 @@ public class Album implements Serializable {
     protected String name;
     protected String uriString;
     protected ArrayList<String> images = new ArrayList<>();
+    protected boolean selected = false;
 
     public Album(String name){
         this.name = name;
@@ -17,7 +18,9 @@ public class Album implements Serializable {
     public void setImage(String image){
         this.uriString = image;
     }
-
+    public void setSelect(Boolean selected){
+        this.selected = selected;
+    }
     public String getName(){
         return name;
     }
@@ -27,6 +30,10 @@ public class Album implements Serializable {
     public ArrayList<String> getImages(){
         return images;
     }
+    public Boolean getSelect(){
+        return selected;
+    }
+
 
 
 }
