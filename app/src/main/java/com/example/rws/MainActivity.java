@@ -14,6 +14,7 @@ import android.provider.MediaStore;
 import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewManager;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -22,6 +23,8 @@ import android.widget.ImageView;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class MainActivity extends Activity {
 
@@ -29,8 +32,9 @@ public class MainActivity extends Activity {
     Button aButton;
     Button rButton;
     Button tButton;
-    ArrayList<Album> albumList = new ArrayList<>();
-
+    ArrayList<String> albumList = new ArrayList<>();
+    HashMap<String,Album> albumMap = new HashMap<>();
+    HashMap<String,AlbumView> albumViewMap = new HashMap<>();
     private static final int PICK_IMAGE = 100;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +42,7 @@ public class MainActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         this.setContentView(R.layout.activity_main);
+
         menuButton = (Button)findViewById(R.id.button);
         aButton = (Button)findViewById(R.id.add);
         rButton = (Button)findViewById(R.id.random);
@@ -64,7 +69,7 @@ public class MainActivity extends Activity {
         tButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                deleteAlbums();
             }
         });
     }
@@ -82,7 +87,6 @@ public class MainActivity extends Activity {
 
     }
     private void albumCreation(){
-        //LayoutInflater inflater = LayoutInflater.from(this);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Set An Album Name")
                 .setView(R.layout.album_create);
@@ -91,7 +95,8 @@ public class MainActivity extends Activity {
                 Dialog dialogObj = Dialog.class.cast(dialog);
                 EditText nameField = (EditText)dialogObj.findViewById(R.id.nameField);
                 Album newAlbum = new Album(nameField.getText().toString());
-                albumList.add(newAlbum);
+                albumList.add(nameField.getText().toString());
+                albumMap.put(nameField.getText().toString(),newAlbum);
                 openGallery();
             }
         });
@@ -114,28 +119,34 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode,resultCode,data);
         if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
             Uri imageUri = data.getData();
-            albumList.get(albumList.size()-1).getImages().add(imageUri.toString());
-            albumList.get(albumList.size()-1).setImage(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
             albumCreated();
         }
     }
     private void albumCreated(){
-        for(Album album:albumList){
-            AlbumView imageView = new AlbumView(MainActivity.this,album.getName());
+        for(String album:albumList){
+            AlbumView imageView = new AlbumView(MainActivity.this,album);
             ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
-            imageView.setImageURI(Uri.parse(album.getImage()));
+            imageView.setImageURI(Uri.parse(albumMap.get(album).getImage()));
             layout.addView(imageView);
+            albumViewMap.put(imageView.getAlbumName(),imageView);
             imageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(((AlbumView)view).getSelect()){
-                        ((AlbumView)view).setSelect(false);
-                        findAlbum(((AlbumView)view).getAlbumName()).setSelect(false);
-                        updateTrashButton();
-
+                    if(viewSelected()){
+                        if(((AlbumView)view).getSelect()){
+                            ((AlbumView)view).setSelect(false);
+                            findAlbum(((AlbumView)view).getAlbumName()).setSelect(false);
+                            updateTrashButton();
+                        }else{
+                            ((AlbumView)view).setSelect(true);
+                            findAlbum(((AlbumView)view).getAlbumName()).setSelect(true);
+                            updateTrashButton();
+                        }
                     }else{
                         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
-                        myIntent.putExtra("ALBUMS", albumList);
+                        myIntent.putExtra("ALBUM", albumMap.get(((AlbumView)view).getAlbumName()));
                         myIntent.putExtra("NAME",((AlbumView)view).getAlbumName());
                         MainActivity.this.startActivity(myIntent);
                     }
@@ -152,32 +163,61 @@ public class MainActivity extends Activity {
             });
         }
         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
-        myIntent.putExtra("ALBUMS", albumList);
-        myIntent.putExtra("NAME",albumList.get(albumList.size()-1).getName());
+        myIntent.putExtra("ALBUMS", albumMap.get(albumList.get(albumList.size()-1)));
+        myIntent.putExtra("NAME",albumList.get(albumList.size()-1));
         MainActivity.this.startActivity(myIntent);
     }
     private void updateTrashButton(){
-        if(checkTrashButton()){
+        if(viewSelected()){
             tButton.setEnabled(true);
 
         }else{
             tButton.setEnabled(false);
         }
     }
-    private Boolean checkTrashButton(){
-        for (Album album:albumList){
-            if(album.getSelect()){
+    private Boolean viewSelected(){
+        for (String album:albumList){
+            if(albumMap.get(album).getSelect()){
                 return true;
             }
         }
         return false;
     }
     private Album findAlbum(String aName){
-        for (Album album:albumList){
-            if(album.getName().equals(aName)){
-                return album;
+        for (String album:albumList){
+            if(albumMap.get(album).getName().equals(aName)){
+                return albumMap.get(album);
             }
         }
         return null;
     }
+    private void deleteAlbums(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Pressing delete will delete all selected albums. Do you want to delete these albums?");
+        builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                removeAlbums();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void removeAlbums(){
+        Iterator listerator = albumList.iterator();
+        ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
+        for(String albums:albumList){
+            if(albumMap.get(albums).getSelect()){
+                albumMap.remove(albums);
+                layout.removeView(albumViewMap.get(albums));
+                albumViewMap.remove(albums);
+                //listerator.remove();
+            }
+        }
+    }
+
 }
