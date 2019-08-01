@@ -3,15 +3,23 @@ package com.example.rws;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.loader.content.CursorLoader;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.WallpaperManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Layout;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewManager;
@@ -20,11 +28,18 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Random;
 
 public class MainActivity extends Activity {
 
@@ -47,6 +62,11 @@ public class MainActivity extends Activity {
         aButton = (Button)findViewById(R.id.add);
         rButton = (Button)findViewById(R.id.random);
         tButton = (Button)findViewById(R.id.trash);
+        if(albumList.size() > 0){
+            tButton.setEnabled(true);
+        }else{
+            tButton.setEnabled(false);
+        }
         tButton.setEnabled(false);
         aButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,6 +83,13 @@ public class MainActivity extends Activity {
         rButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Random randNum = new Random();
+                int randomAlb = randNum.nextInt(albumList.size());
+                System.out.println(randomAlb);
+                Album randAlb = albumMap.get(albumList.get(randomAlb));
+                Uri randIm = Uri.parse(randAlb.getImages().get(randNum.nextInt(randAlb.getImages().size())));
+                Bitmap newBm = loadBitmap(randIm);
+                reloadWallpaper(newBm);
 
             }
         });
@@ -223,6 +250,65 @@ public class MainActivity extends Activity {
             }
         }
         updateTrashButton();
+    }
+    private Bitmap loadBitmap(Uri src) {
+
+        Bitmap bm = null;
+
+        try {
+            bm = BitmapFactory.decodeStream(
+                    getBaseContext().getContentResolver().openInputStream(src));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return bm;
+    }
+    private void reloadWallpaper(Bitmap bm){
+        if(bm != null){
+
+            WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+            Bitmap newBm = centerCropWallpaper(bm, myWallpaperManager.getDesiredMinimumWidth(), myWallpaperManager.getDesiredMinimumHeight());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if(myWallpaperManager.isWallpaperSupported()){
+                    try {
+                        myWallpaperManager.setBitmap(newBm);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    Toast.makeText(MainActivity.this,
+                            "isWallpaperSupported() NOT SUPPORTED",
+                            Toast.LENGTH_LONG).show();
+                }
+            }else{
+                try {
+                    myWallpaperManager.setBitmap(newBm);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }else{
+            Toast.makeText(MainActivity.this, "bm == null", Toast.LENGTH_LONG).show();
+        }
+    }
+    private Bitmap centerCropWallpaper(Bitmap wallpaper, int desiredWidth, int desiredHeight){
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        float scale = (float) desiredHeight / wallpaper.getHeight();
+        int scaledWidth = (int) (scale * wallpaper.getWidth());
+        int deviceWidth = displayMetrics.widthPixels;
+        int imageCenterWidth = scaledWidth /2;
+        int widthToCut = imageCenterWidth - deviceWidth / 2;
+        int leftWidth = scaledWidth - widthToCut;
+        Bitmap scaledWallpaper = Bitmap.createScaledBitmap(wallpaper, scaledWidth, desiredHeight, false);
+        Bitmap croppedWallpaper = Bitmap.createBitmap(
+                scaledWallpaper,
+                widthToCut,
+                0,
+                leftWidth,
+                desiredHeight
+        );
+        return croppedWallpaper;
     }
 
 }
