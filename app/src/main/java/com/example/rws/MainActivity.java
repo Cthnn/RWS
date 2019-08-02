@@ -155,9 +155,14 @@ public class MainActivity extends Activity {
         for (String album : albumList) {
             if (!albumMap.get(album).getVisible()) {
                 AlbumView imageView = new AlbumView(MainActivity.this, album);
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                int height = displayMetrics.heightPixels;
+                int width = displayMetrics.widthPixels;
                 ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
-                imageView.setImageURI(Uri.parse(albumMap.get(album).getImage()));
+                imageView.setImageBitmap(centerCrop(loadBitmap(Uri.parse(albumMap.get(album).getImage())),width/5,height/5));
                 layout.addView(imageView);
+                imageView.setPadding(300,500,300,500);
                 albumViewMap.put(imageView.getAlbumName(), imageView);
                 albumMap.get(album).setVisible(true);
                 imageView.setOnClickListener(new View.OnClickListener() {
@@ -268,7 +273,9 @@ public class MainActivity extends Activity {
         if(bm != null){
 
             WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
-            Bitmap newBm = centerCropWallpaper(bm, myWallpaperManager.getDesiredMinimumWidth(), myWallpaperManager.getDesiredMinimumHeight());
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            Bitmap newBm = centerCropWallpaper(bm, displayMetrics.widthPixels, displayMetrics.heightPixels);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if(myWallpaperManager.isWallpaperSupported()){
                     try {
@@ -293,21 +300,17 @@ public class MainActivity extends Activity {
         }
     }
     private Bitmap centerCropWallpaper(Bitmap wallpaper, int desiredWidth, int desiredHeight){
-        DisplayMetrics displayMetrics = new DisplayMetrics();
         float scale = (float) desiredHeight / wallpaper.getHeight();
         int scaledWidth = (int) (scale * wallpaper.getWidth());
-        int deviceWidth = displayMetrics.widthPixels;
-        int imageCenterWidth = scaledWidth /2;
-        int widthToCut = imageCenterWidth - deviceWidth / 2;
-        int leftWidth = scaledWidth - widthToCut;
         Bitmap scaledWallpaper = Bitmap.createScaledBitmap(wallpaper, scaledWidth, desiredHeight, false);
-        Bitmap croppedWallpaper = Bitmap.createBitmap(
-                scaledWallpaper,
-                widthToCut,
-                0,
-                leftWidth,
-                desiredHeight
-        );
+        Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper,(scaledWallpaper.getWidth()-desiredWidth)/2, 0,desiredWidth, desiredHeight);
+        return croppedWallpaper;
+    }
+    private Bitmap centerCrop(Bitmap bm, int desiredWidth, int desiredHeight){
+        float scale = (float) desiredHeight / bm.getHeight();
+        int scaledWidth = (int) (scale * bm.getWidth());
+        Bitmap scaledWallpaper = Bitmap.createScaledBitmap(bm, scaledWidth, desiredHeight, false);
+        Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper, (scaledWallpaper.getWidth()-desiredWidth)/2, 0, desiredWidth, desiredHeight);
         return croppedWallpaper;
     }
 
