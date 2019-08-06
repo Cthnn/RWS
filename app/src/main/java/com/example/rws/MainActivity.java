@@ -8,6 +8,7 @@ import androidx.loader.content.CursorLoader;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.WallpaperManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -22,11 +23,17 @@ import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewManager;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -42,22 +49,22 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class MainActivity extends Activity {
-
+    GridView grid;
     Button menuButton;
     Button aButton;
     Button rButton;
     Button tButton;
     ArrayList<String> albumList = new ArrayList<>();
     HashMap<String,Album> albumMap = new HashMap<>();
-    HashMap<String,AlbumView> albumViewMap = new HashMap<>();
     private static final int PICK_IMAGE = 100;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        System.out.println("ran");
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         this.setContentView(R.layout.activity_main);
-
+        grid = (GridView) findViewById(R.id.albumDisplay);
         menuButton = (Button)findViewById(R.id.button);
         aButton = (Button)findViewById(R.id.add);
         rButton = (Button)findViewById(R.id.random);
@@ -97,6 +104,36 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
                 deleteAlbums();
+            }
+        });
+        grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                if (viewSelected()) {
+                    if (((AlbumView) view).getSelect()) {
+                        ((AlbumView) view).setSelect(false);
+                        findAlbum(((AlbumView) view).getAlbumName()).setSelect(false);
+                        updateTrashButton();
+                    } else {
+                        ((AlbumView) view).setSelect(true);
+                        findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
+                        updateTrashButton();
+                    }
+                } else {
+                    Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
+                    myIntent.putExtra("ALBUM", albumMap.get(((AlbumView) view).getAlbumName()));
+                    myIntent.putExtra("NAME", ((AlbumView) view).getAlbumName());
+                    MainActivity.this.startActivity(myIntent);
+                }
+            }
+        });
+        grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                ((AlbumView) view).setSelect(true);
+                findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
+                updateTrashButton();
+                return true;
             }
         });
     }
@@ -154,51 +191,12 @@ public class MainActivity extends Activity {
     private void albumCreated() {
         for (String album : albumList) {
             if (!albumMap.get(album).getVisible()) {
-                AlbumView imageView = new AlbumView(MainActivity.this, album);
-                DisplayMetrics displayMetrics = new DisplayMetrics();
-                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-                int height = displayMetrics.heightPixels;
-                int width = displayMetrics.widthPixels;
-                ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
-                imageView.setImageBitmap(centerCrop(loadBitmap(Uri.parse(albumMap.get(album).getImage())),width/5,height/5));
-                layout.addView(imageView);
-                imageView.setPadding(300,500,300,500);
-                albumViewMap.put(imageView.getAlbumName(), imageView);
                 albumMap.get(album).setVisible(true);
-                imageView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if (viewSelected()) {
-                            if (((AlbumView) view).getSelect()) {
-                                ((AlbumView) view).setSelect(false);
-                                findAlbum(((AlbumView) view).getAlbumName()).setSelect(false);
-                                updateTrashButton();
-                            } else {
-                                ((AlbumView) view).setSelect(true);
-                                findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
-                                updateTrashButton();
-                            }
-                        } else {
-                            Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
-                            myIntent.putExtra("ALBUM", albumMap.get(((AlbumView) view).getAlbumName()));
-                            myIntent.putExtra("NAME", ((AlbumView) view).getAlbumName());
-                            MainActivity.this.startActivity(myIntent);
-                        }
-                    }
-                });
-                imageView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View view) {
-                        ((AlbumView) view).setSelect(true);
-                        findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
-                        updateTrashButton();
-                        return true;
-                    }
-                });
             }
         }
+        reloadGrid();
         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
-        myIntent.putExtra("ALBUMS", albumMap.get(albumList.get(albumList.size()-1)));
+        myIntent.putExtra("ALBUM", albumMap.get(albumList.get(albumList.size()-1)));
         myIntent.putExtra("NAME",albumList.get(albumList.size()-1));
         MainActivity.this.startActivity(myIntent);
     }
@@ -244,16 +242,14 @@ public class MainActivity extends Activity {
     }
     private void removeAlbums(){
         Iterator listerator = albumList.iterator();
-        ConstraintLayout layout = (ConstraintLayout) findViewById(R.id.container);
         while(listerator.hasNext()){
             String album = (String)listerator.next();
             if(albumMap.get(album).getSelect()){
                 albumMap.remove(album);
-                layout.removeView(albumViewMap.get(album));
-                albumViewMap.remove(album);
                 listerator.remove();
             }
         }
+        reloadGrid();
         updateTrashButton();
     }
     private Bitmap loadBitmap(Uri src) {
@@ -313,5 +309,45 @@ public class MainActivity extends Activity {
         Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper, (scaledWallpaper.getWidth()-desiredWidth)/2, 0, desiredWidth, desiredHeight);
         return croppedWallpaper;
     }
+    private void reloadGrid(){
+        grid.setAdapter(new ImageAdapter(this,albumMap,albumList));
+    }
+    public class ImageAdapter extends BaseAdapter{
+        private Context mContext;
+        protected HashMap<String,Album> aMap;
+        ArrayList<String> aList;
+        public ImageAdapter(Context mainActivity,HashMap<String,Album> aMap, ArrayList<String> aList){
+            this.mContext = mainActivity;
+            this.aMap = aMap;
+            this.aList = aList;
+        }
 
+        @Override
+        public int getCount() {
+            return aList.size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return aMap.get(aList.get(i));
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            AlbumView imageView = new AlbumView(mContext,aList.get(i));
+            imageView.setImageURI(Uri.parse(aMap.get(aList.get(i)).getImage()));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            int height = displayMetrics.heightPixels;
+            int width = displayMetrics.widthPixels;
+            imageView.setLayoutParams(new GridView.LayoutParams(width/5, height/5));
+            return imageView;
+        }
+    }
 }
