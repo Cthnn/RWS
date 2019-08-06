@@ -5,11 +5,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.app.Activity;
+import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -18,7 +21,10 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -104,7 +110,7 @@ public class AlbumPage extends Activity {
             reloadGrid();
         }
     }
-    private void deleteAlbums(){
+    private void deleteImages(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Pressing delete will delete all selected images. Do you want to delete these images?");
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
@@ -123,17 +129,84 @@ public class AlbumPage extends Activity {
     private void reloadGrid(){
         grid.setAdapter(new PicAdapter(this,album.getImages()));
     }
-    private void removeImagesg(){
+    private void removeImages(){
         Iterator listerator = album.getImages().iterator();
         while(listerator.hasNext()){
             String album = (String)listerator.next();
-            if(albumMap.get(album).getSelect()){
-                albumMap.remove(album);
-                listerator.remove();
+            for(int i = 0;i<grid.getChildCount();i++){
+                if(((AlbumView)grid.getChildAt(i)).getSelect()){
+                    listerator.remove();
+                }
             }
         }
         reloadGrid();
         updateTrashButton();
+    }
+    private void updateTrashButton(){
+        if(viewSelected()){
+            tButton.setEnabled(true);
+
+        }else{
+            tButton.setEnabled(false);
+        }
+    }
+    private Boolean viewSelected(){
+        for(int i = 0;i<grid.getChildCount();i++){
+            if(((AlbumView)grid.getChildAt(i)).getSelect()){
+                return true;
+            }
+        }
+        return false;
+    }
+    private Bitmap loadBitmap(Uri src) {
+
+        Bitmap bm = null;
+
+        try {
+            bm = BitmapFactory.decodeStream(
+                    getBaseContext().getContentResolver().openInputStream(src));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return bm;
+    }
+    private void reloadWallpaper(Bitmap bm){
+        if(bm != null){
+
+            WallpaperManager myWallpaperManager = WallpaperManager.getInstance(getApplicationContext());
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            Bitmap newBm = centerCropWallpaper(bm, displayMetrics.widthPixels, displayMetrics.heightPixels);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if(myWallpaperManager.isWallpaperSupported()){
+                    try {
+                        myWallpaperManager.setBitmap(newBm);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    Toast.makeText(AlbumPage.this,
+                            "isWallpaperSupported() NOT SUPPORTED",
+                            Toast.LENGTH_LONG).show();
+                }
+            }else{
+                try {
+                    myWallpaperManager.setBitmap(newBm);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }else{
+            Toast.makeText(AlbumPage.this, "bm == null", Toast.LENGTH_LONG).show();
+        }
+    }
+    private Bitmap centerCropWallpaper(Bitmap wallpaper, int desiredWidth, int desiredHeight){
+        float scale = (float) desiredHeight / wallpaper.getHeight();
+        int scaledWidth = (int) (scale * wallpaper.getWidth());
+        Bitmap scaledWallpaper = Bitmap.createScaledBitmap(wallpaper, scaledWidth, desiredHeight, false);
+        Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper,(scaledWallpaper.getWidth()-desiredWidth)/2, 0,desiredWidth, desiredHeight);
+        return croppedWallpaper;
     }
     public class PicAdapter extends BaseAdapter {
         private Context mContext;
@@ -160,7 +233,7 @@ public class AlbumPage extends Activity {
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            ImageView imageView = new ImageView(mContext);
+            AlbumView imageView = new AlbumView(mContext,album.getImages().get(i));
             imageView.setImageURI(Uri.parse(images.get(i)));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             DisplayMetrics displayMetrics = new DisplayMetrics();
