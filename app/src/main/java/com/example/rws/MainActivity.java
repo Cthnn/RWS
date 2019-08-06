@@ -69,11 +69,6 @@ public class MainActivity extends Activity {
         aButton = (Button)findViewById(R.id.add);
         rButton = (Button)findViewById(R.id.random);
         tButton = (Button)findViewById(R.id.trash);
-        if(albumList.size() > 0){
-            tButton.setEnabled(true);
-        }else{
-            tButton.setEnabled(false);
-        }
         tButton.setEnabled(false);
         aButton.setOnClickListener(new View.OnClickListener() {
             @Override
