@@ -52,6 +52,7 @@ public class AlbumPage extends Activity {
         rButton = (Button)findViewById(R.id.random);
         tButton = (Button)findViewById(R.id.trash);
         tButton.setEnabled(false);
+        reloadGrid();
         aButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -207,6 +208,13 @@ public class AlbumPage extends Activity {
         Bitmap scaledWallpaper = Bitmap.createScaledBitmap(wallpaper, scaledWidth, desiredHeight, false);
         Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper,(scaledWallpaper.getWidth()-desiredWidth)/2, 0,desiredWidth, desiredHeight);
         return croppedWallpaper;
+    }
+    public void onBackPressed() {
+        Intent myIntent = new Intent();
+        myIntent.putExtra("ALBUM", album);
+        myIntent.putExtra("NAME",name);
+        setResult(RESULT_OK, myIntent);
+        finish();
     }
     public class PicAdapter extends BaseAdapter {
         private Context mContext;

@@ -57,6 +57,7 @@ public class MainActivity extends Activity {
     ArrayList<String> albumList = new ArrayList<>();
     HashMap<String,Album> albumMap = new HashMap<>();
     private static final int PICK_IMAGE = 100;
+    private static final int ALBUM_BACK_OUT = 101;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         System.out.println("ran");
@@ -181,6 +182,11 @@ public class MainActivity extends Activity {
             albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
             albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
             albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+                Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+                String name = data.getStringExtra("NAME");
+                albumMap.remove(name);
+                albumMap.put(name,updatedAlbum);
         }
     }
     private void albumCreated() {
@@ -193,7 +199,7 @@ public class MainActivity extends Activity {
         Intent myIntent = new Intent(MainActivity.this, AlbumPage.class);
         myIntent.putExtra("ALBUM", albumMap.get(albumList.get(albumList.size()-1)));
         myIntent.putExtra("NAME",albumList.get(albumList.size()-1));
-        MainActivity.this.startActivity(myIntent);
+        MainActivity.this.startActivityForResult(myIntent,ALBUM_BACK_OUT);
     }
     private void updateTrashButton(){
         if(viewSelected()){
