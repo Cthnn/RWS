@@ -170,7 +170,7 @@ public class MainActivity extends Activity {
     }
 
     private void openGallery(){
-        Intent gallery = new Intent(Intent.ACTION_GET_CONTENT);
+        Intent gallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         gallery.setType("*/*");
         startActivityForResult(gallery,PICK_IMAGE);
     }
@@ -184,6 +184,7 @@ public class MainActivity extends Activity {
             albumCreated();
         }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
                 Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+                System.out.println(updatedAlbum.getImages().size());
                 String name = data.getStringExtra("NAME");
                 albumMap.remove(name);
                 albumMap.put(name,updatedAlbum);

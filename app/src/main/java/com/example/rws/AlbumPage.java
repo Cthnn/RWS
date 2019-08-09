@@ -98,7 +98,7 @@ public class AlbumPage extends Activity {
 
     }
     private void openGallery(){
-        Intent gallery = new Intent(Intent.ACTION_GET_CONTENT);
+        Intent gallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         gallery.setType("*/*");
         startActivityForResult(gallery,PICK_IMAGE);
     }
@@ -241,6 +241,8 @@ public class AlbumPage extends Activity {
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
+            System.out.println(album.getImages().get(i));
+            System.out.println(images.get(i));
             AlbumView imageView = new AlbumView(mContext,album.getImages().get(i));
             imageView.setImageURI(Uri.parse(images.get(i)));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
