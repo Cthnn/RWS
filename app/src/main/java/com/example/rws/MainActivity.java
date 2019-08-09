@@ -352,4 +352,76 @@ public class MainActivity extends Activity {
             return imageView;
         }
     }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
+            Uri imageUri = data.getData();
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
+            albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+            Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+            System.out.println(updatedAlbum.getImages().size());
+            String name = data.getStringExtra("NAME");
+            albumMap.remove(name);
+            albumMap.put(name,updatedAlbum);
+        }
+    }protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
+            Uri imageUri = data.getData();
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
+            albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+            Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+            System.out.println(updatedAlbum.getImages().size());
+            String name = data.getStringExtra("NAME");
+            albumMap.remove(name);
+            albumMap.put(name,updatedAlbum);
+        }
+    }protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
+            Uri imageUri = data.getData();
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
+            albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+            Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+            System.out.println(updatedAlbum.getImages().size());
+            String name = data.getStringExtra("NAME");
+            albumMap.remove(name);
+            albumMap.put(name,updatedAlbum);
+        }
+    }protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
+            Uri imageUri = data.getData();
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
+            albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+            Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+            System.out.println(updatedAlbum.getImages().size());
+            String name = data.getStringExtra("NAME");
+            albumMap.remove(name);
+            albumMap.put(name,updatedAlbum);
+        }
+    }protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if(resultCode == RESULT_OK && requestCode == PICK_IMAGE){
+            Uri imageUri = data.getData();
+            albumMap.get(albumList.get(albumList.size()-1)).getImages().add(imageUri.toString());
+            albumMap.get(albumList.get(albumList.size()-1)).setImage(imageUri.toString());
+            albumCreated();
+        }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
+            Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
+            System.out.println(updatedAlbum.getImages().size());
+            String name = data.getStringExtra("NAME");
+            albumMap.remove(name);
+            albumMap.put(name,updatedAlbum);
+        }
+    }
 }
