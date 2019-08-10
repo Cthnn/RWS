@@ -50,9 +50,9 @@ public class MainActivity extends Activity {
     GridView grid;
     Button menuButton;
     ImageView aButton;
-    Button rButton;
-    Button tButton;
-    Button eButton;
+    ImageView rButton;
+    ImageView tButton;
+    ImageView eButton;
     ArrayList<String> albumList = new ArrayList<>();
     HashMap<String,Album> albumMap = new HashMap<>();
     int pixel;
@@ -76,9 +76,9 @@ public class MainActivity extends Activity {
         grid = (GridView) findViewById(R.id.albumDisplay);
         menuButton = (Button)findViewById(R.id.button);
         aButton = (ImageView)findViewById(R.id.add);
-        rButton = (Button) findViewById(R.id.random);
-        tButton = (Button)findViewById(R.id.trash);
-        eButton = (Button)findViewById(R.id.edit);
+        rButton = (ImageView) findViewById(R.id.random);
+        tButton = (ImageView)findViewById(R.id.trash);
+        eButton = (ImageView)findViewById(R.id.edit);
         tButton.setEnabled(false);
         aButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -122,8 +122,6 @@ public class MainActivity extends Activity {
                     lastTouchDownXY[0] = motionEvent.getX();
                     lastTouchDownXY[1] = motionEvent.getY();
                 }
-
-                // let the touch event pass on to whoever needs it
                 return false;
             }
         });
@@ -144,26 +142,40 @@ public class MainActivity extends Activity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    lastTouchDownXY[0] = motionEvent.getX();
-                    lastTouchDownXY[1] = motionEvent.getY();
-                    Bitmap button = ((BitmapDrawable)((Button)view).getBackground()).getBitmap();
-                    pixel = button.getPixel((int)motionEvent.getX(),(int)motionEvent.getY());
+                    System.out.println(view.getHeight());
+                    System.out.println(view.getWidth());
+                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
+                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
+                    System.out.println(motionEvent.getX());
+                    System.out.println(motionEvent.getY());
+                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    double ratio = (button.getHeight()/view.getHeight());
+                    int x = ((int)(motionEvent.getX()*(ratio)));
+                    int y =((int)(motionEvent.getY()*(ratio)));
+                    System.out.println(x);
+                    System.out.println(y);
+                    System.out.println(button.getHeight());
+                    System.out.println(button.getWidth());
+                    pixel = button.getPixel(x,y);
+                    System.out.println(pixel);
                 }
-
-                // let the touch event pass on to whoever needs it
                 return false;
             }
         });
         rButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Random randNum = new Random();
-                int randomAlb = randNum.nextInt(albumList.size());
-                System.out.println(randomAlb);
-                Album randAlb = albumMap.get(albumList.get(randomAlb));
-                Uri randIm = Uri.parse(randAlb.getImages().get(randNum.nextInt(randAlb.getImages().size())));
-                Bitmap newBm = loadBitmap(randIm);
-                reloadWallpaper(newBm);
+                if(pixel == Color.TRANSPARENT){
+                    return;
+                }else {
+                    Random randNum = new Random();
+                    int randomAlb = randNum.nextInt(albumList.size());
+                    System.out.println(randomAlb);
+                    Album randAlb = albumMap.get(albumList.get(randomAlb));
+                    Uri randIm = Uri.parse(randAlb.getImages().get(randNum.nextInt(randAlb.getImages().size())));
+                    Bitmap newBm = loadBitmap(randIm);
+                    reloadWallpaper(newBm);
+                }
 
             }
         });
@@ -172,20 +184,34 @@ public class MainActivity extends Activity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    lastTouchDownXY[0] = motionEvent.getX();
-                    lastTouchDownXY[1] = motionEvent.getY();
-                    Bitmap button = ((BitmapDrawable)((Button)view).getBackground()).getBitmap();
-                    pixel = button.getPixel((int)motionEvent.getX(),(int)motionEvent.getY());
+                    System.out.println(view.getHeight());
+                    System.out.println(view.getWidth());
+                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
+                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
+                    System.out.println(motionEvent.getX());
+                    System.out.println(motionEvent.getY());
+                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    double ratio = (button.getHeight()/view.getHeight());
+                    int x = ((int)(motionEvent.getX()*(ratio)));
+                    int y =((int)(motionEvent.getY()*(ratio)));
+                    System.out.println(x);
+                    System.out.println(y);
+                    System.out.println(button.getHeight());
+                    System.out.println(button.getWidth());
+                    pixel = button.getPixel(x,y);
+                    System.out.println(pixel);
                 }
-
-                // let the touch event pass on to whoever needs it
                 return false;
             }
         });
         tButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                deleteAlbums();
+                if(pixel == Color.TRANSPARENT){
+                    return;
+                }else {
+                    deleteAlbums();
+                }
             }
         });
         grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
