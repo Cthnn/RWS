@@ -2,6 +2,7 @@ package com.example.rws;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.app.Activity;
@@ -241,8 +242,7 @@ public class AlbumPage extends Activity {
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            System.out.println(album.getImages().get(i));
-            System.out.println(images.get(i));
+            CardView actualView = new CardView(mContext);
             AlbumView imageView = new AlbumView(mContext,album.getImages().get(i));
             imageView.setImageURI(Uri.parse(images.get(i)));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -250,8 +250,10 @@ public class AlbumPage extends Activity {
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             int height = displayMetrics.heightPixels;
             int width = displayMetrics.widthPixels;
-            imageView.setLayoutParams(new GridView.LayoutParams(width/5, height/5));
-            return imageView;
+            actualView.addView(imageView);
+            actualView.setRadius(20);
+            actualView.setLayoutParams(new GridView.LayoutParams(width/4, height/4));
+            return actualView;
         }
     }
 }

@@ -1,48 +1,39 @@
 package com.example.rws;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.loader.content.CursorLoader;
-
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.text.Layout;
 import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewManager;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,8 +47,16 @@ public class MainActivity extends Activity {
     Button tButton;
     ArrayList<String> albumList = new ArrayList<>();
     HashMap<String,Album> albumMap = new HashMap<>();
+    float [] colorMatrix = {
+            1,0,0,0,0,
+            0,1,0,0,0,
+            1,0,1,0,0,
+            0,0,0,1,1};
+    final ColorFilter highlight = new ColorMatrixColorFilter(colorMatrix);
     private static final int PICK_IMAGE = 100;
     private static final int ALBUM_BACK_OUT = 101;
+    private float[] lastTouchDownXY = new float[2];
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         System.out.println("ran");
@@ -77,10 +76,28 @@ public class MainActivity extends Activity {
                 albumCreation();
             }
         });
+        menuButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    lastTouchDownXY[0] = motionEvent.getX();
+                    lastTouchDownXY[1] = motionEvent.getY();
+                }
+
+                // let the touch event pass on to whoever needs it
+                return false;
+            }
+        });
         menuButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                menuClick();
+                float x = Math.abs(lastTouchDownXY[0] - (menuButton.getHeight() / 2));
+                float y = Math.abs(lastTouchDownXY[1] - (menuButton.getWidth() / 2));
+                if (Math.sqrt((x * x) + (y * y)) > (menuButton.getHeight() / 2)) {
+                    return;
+                } else {
+                    menuClick();
+                }
             }
         });
         rButton.setOnClickListener(new View.OnClickListener() {
@@ -106,13 +123,15 @@ public class MainActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 if (viewSelected()) {
-                    if (((AlbumView) view).getSelect()) {
-                        ((AlbumView) view).setSelect(false);
-                        findAlbum(((AlbumView) view).getAlbumName()).setSelect(false);
+                    if (((AlbumView)((CardView) view).getChildAt(0)).getSelect()) {
+                        ((AlbumView)((CardView) view).getChildAt(0)).setSelect(false);
+                        findAlbum(((AlbumView)((CardView) view).getChildAt(0)).getAlbumName()).setSelect(false);
+                        ((AlbumView)((CardView) view).getChildAt(0)).clearColorFilter();
                         updateTrashButton();
                     } else {
-                        ((AlbumView) view).setSelect(true);
-                        findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
+                        ((AlbumView)((CardView) view).getChildAt(0)).setSelect(true);
+                        findAlbum(((AlbumView)((CardView) view).getChildAt(0)).getAlbumName()).setSelect(true);
+                        ((AlbumView)((CardView) view).getChildAt(0)).setColorFilter(highlight);
                         updateTrashButton();
                     }
                 } else {
@@ -126,9 +145,10 @@ public class MainActivity extends Activity {
         grid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-                ((AlbumView) view).setSelect(true);
-                findAlbum(((AlbumView) view).getAlbumName()).setSelect(true);
+                ((AlbumView)((CardView) view).getChildAt(0)).setSelect(true);
+                findAlbum(((AlbumView)((CardView) view).getChildAt(0)).getAlbumName()).setSelect(true);
                 updateTrashButton();
+                ((AlbumView)((CardView) view).getChildAt(0)).setColorFilter(highlight);
                 return true;
             }
         });
@@ -304,13 +324,6 @@ public class MainActivity extends Activity {
         Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper,(scaledWallpaper.getWidth()-desiredWidth)/2, 0,desiredWidth, desiredHeight);
         return croppedWallpaper;
     }
-    private Bitmap centerCrop(Bitmap bm, int desiredWidth, int desiredHeight){
-        float scale = (float) desiredHeight / bm.getHeight();
-        int scaledWidth = (int) (scale * bm.getWidth());
-        Bitmap scaledWallpaper = Bitmap.createScaledBitmap(bm, scaledWidth, desiredHeight, false);
-        Bitmap croppedWallpaper = Bitmap.createBitmap(scaledWallpaper, (scaledWallpaper.getWidth()-desiredWidth)/2, 0, desiredWidth, desiredHeight);
-        return croppedWallpaper;
-    }
     private void reloadGrid(){
         grid.setAdapter(new ImageAdapter(this,albumMap,albumList));
     }
@@ -341,6 +354,7 @@ public class MainActivity extends Activity {
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
+            CardView actualView = new CardView(mContext);
             AlbumView imageView = new AlbumView(mContext,aList.get(i));
             imageView.setImageURI(Uri.parse(aMap.get(aList.get(i)).getImage()));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -348,8 +362,10 @@ public class MainActivity extends Activity {
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             int height = displayMetrics.heightPixels;
             int width = displayMetrics.widthPixels;
-            imageView.setLayoutParams(new GridView.LayoutParams(width/5, height/5));
-            return imageView;
+            actualView.addView(imageView);
+            actualView.setRadius(20);
+            actualView.setLayoutParams(new GridView.LayoutParams(width/4, height/4));
+            return actualView;
         }
     }
 }
