@@ -9,8 +9,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +31,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -42,11 +49,13 @@ import java.util.Random;
 public class MainActivity extends Activity {
     GridView grid;
     Button menuButton;
-    Button aButton;
+    ImageView aButton;
     Button rButton;
     Button tButton;
+    Button eButton;
     ArrayList<String> albumList = new ArrayList<>();
     HashMap<String,Album> albumMap = new HashMap<>();
+    int pixel;
     float [] colorMatrix = {
             1,0,0,0,0,
             0,1,0,0,0,
@@ -66,16 +75,46 @@ public class MainActivity extends Activity {
         this.setContentView(R.layout.activity_main);
         grid = (GridView) findViewById(R.id.albumDisplay);
         menuButton = (Button)findViewById(R.id.button);
-        aButton = (Button)findViewById(R.id.add);
-        rButton = (Button)findViewById(R.id.random);
+        aButton = (ImageView)findViewById(R.id.add);
+        rButton = (Button) findViewById(R.id.random);
         tButton = (Button)findViewById(R.id.trash);
+        eButton = (Button)findViewById(R.id.edit);
         tButton.setEnabled(false);
+        aButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    System.out.println(view.getHeight());
+                    System.out.println(view.getWidth());
+                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
+                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
+                    System.out.println(motionEvent.getX());
+                    System.out.println(motionEvent.getY());
+                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    double ratio = (button.getHeight()/view.getHeight());
+                    int x = ((int)(motionEvent.getX()*(ratio)));
+                    int y =((int)(motionEvent.getY()*(ratio)));
+                    System.out.println(x);
+                    System.out.println(y);
+                    System.out.println(button.getHeight());
+                    System.out.println(button.getWidth());
+                    pixel = button.getPixel(x,y);
+                    System.out.println(pixel);
+                }
+                return false;
+            }
+        });
         aButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                albumCreation();
+                if(pixel == Color.TRANSPARENT){
+                    return;
+                }else {
+                    albumCreation();
+                }
             }
         });
+
         menuButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -100,6 +139,21 @@ public class MainActivity extends Activity {
                 }
             }
         });
+
+        rButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    lastTouchDownXY[0] = motionEvent.getX();
+                    lastTouchDownXY[1] = motionEvent.getY();
+                    Bitmap button = ((BitmapDrawable)((Button)view).getBackground()).getBitmap();
+                    pixel = button.getPixel((int)motionEvent.getX(),(int)motionEvent.getY());
+                }
+
+                // let the touch event pass on to whoever needs it
+                return false;
+            }
+        });
         rButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -111,6 +165,21 @@ public class MainActivity extends Activity {
                 Bitmap newBm = loadBitmap(randIm);
                 reloadWallpaper(newBm);
 
+            }
+        });
+
+        tButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    lastTouchDownXY[0] = motionEvent.getX();
+                    lastTouchDownXY[1] = motionEvent.getY();
+                    Bitmap button = ((BitmapDrawable)((Button)view).getBackground()).getBitmap();
+                    pixel = button.getPixel((int)motionEvent.getX(),(int)motionEvent.getY());
+                }
+
+                // let the touch event pass on to whoever needs it
+                return false;
             }
         });
         tButton.setOnClickListener(new View.OnClickListener() {
@@ -158,10 +227,12 @@ public class MainActivity extends Activity {
             aButton.setVisibility(View.INVISIBLE);
             tButton.setVisibility(View.INVISIBLE);
             rButton.setVisibility(View.INVISIBLE);
+            eButton.setVisibility(View.INVISIBLE);
         }else{
             aButton.setVisibility(View.VISIBLE);
             tButton.setVisibility(View.VISIBLE);
             rButton.setVisibility(View.VISIBLE);
+            eButton.setVisibility(View.VISIBLE);
         }
 
 
@@ -237,6 +308,21 @@ public class MainActivity extends Activity {
             }
         }
         return false;
+    }
+    private Bitmap drawableConverter(VectorDrawable vd){
+        try {
+            Bitmap bitmap;
+
+            bitmap = Bitmap.createBitmap(vd.getIntrinsicWidth(), vd.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
+            Canvas canvas = new Canvas(bitmap);
+            vd.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            vd.draw(canvas);
+            return bitmap;
+        } catch (OutOfMemoryError e) {
+            // Handle the error
+            return null;
+        }
     }
     private Album findAlbum(String aName){
         for (String album:albumList){
