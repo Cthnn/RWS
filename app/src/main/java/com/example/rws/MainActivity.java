@@ -12,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
@@ -80,6 +81,7 @@ public class MainActivity extends Activity {
         tButton = (ImageView)findViewById(R.id.trash);
         eButton = (ImageView)findViewById(R.id.edit);
         tButton.setEnabled(false);
+        eButton.setEnabled(false);
         aButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -214,6 +216,16 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        tButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(pixel == Color.TRANSPARENT){
+                    return;
+                }else {
+                    editAlbumName();
+                }
+            }
+        });
         grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -262,6 +274,38 @@ public class MainActivity extends Activity {
         }
 
 
+    }
+    private void editAlbumName(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Edit Album Name")
+                .setView(R.layout.album_create);
+
+        builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                Dialog dialogObj = Dialog.class.cast(dialog);
+                EditText nameField = (EditText)dialogObj.findViewById(R.id.nameField);
+                String oldName = onlyOneSelected();
+                String newName = nameField.getText().toString();
+                for(int i = 0;i<grid.getChildCount();i++){
+                    if(((AlbumView)grid.getChildAt(i)).getAlbumName().equals(oldName)){
+                        ((AlbumView)grid.getChildAt(i)).setAlbumName(newName);
+                    }
+                }
+                albumList.set(albumList.indexOf(oldName),newName);
+                Album alb =albumMap.get(oldName);
+                albumMap.remove(oldName);
+                albumMap.put(newName,alb);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        AlertDialog dialog = builder.create();
+        EditText nameField = (EditText)dialog.findViewById(R.id.nameField);
+        nameField.setText(onlyOneSelected());
+        dialog.show();
     }
     private void albumCreation(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -326,6 +370,11 @@ public class MainActivity extends Activity {
         }else{
             tButton.setEnabled(false);
         }
+        if(numSelected() == 1){
+            eButton.setEnabled(true);
+        }else{
+            eButton.setEnabled(false);
+        }
     }
     private Boolean viewSelected(){
         for (String album:albumList){
@@ -357,6 +406,23 @@ public class MainActivity extends Activity {
             }
         }
         return null;
+    }
+    private int numSelected(){
+        int count = 0;
+        for (String album:albumList){
+            if(albumMap.get(album).getSelect()){
+                count++;
+            }
+        }
+        return count;
+    }
+    private String onlyOneSelected(){
+        for(String album:albumList){
+            if(albumMap.get(album).getSelect()){
+                return album;
+            }
+        }
+        return "";
     }
     private void deleteAlbums(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
