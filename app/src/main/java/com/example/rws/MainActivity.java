@@ -86,22 +86,11 @@ public class MainActivity extends Activity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    System.out.println(view.getHeight());
-                    System.out.println(view.getWidth());
-                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
-                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
-                    System.out.println(motionEvent.getX());
-                    System.out.println(motionEvent.getY());
-                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    Bitmap button = makeBitmap((VectorDrawable) ((ImageView)view).getDrawable());
                     double ratio = (button.getHeight()/view.getHeight());
                     int x = ((int)(motionEvent.getX()*(ratio)));
                     int y =((int)(motionEvent.getY()*(ratio)));
-                    System.out.println(x);
-                    System.out.println(y);
-                    System.out.println(button.getHeight());
-                    System.out.println(button.getWidth());
                     pixel = button.getPixel(x,y);
-                    System.out.println(pixel);
                 }
                 return false;
             }
@@ -110,6 +99,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
                 if(pixel == Color.TRANSPARENT){
+                    System.out.println("ran");
                     return;
                 }else {
                     albumCreation();
@@ -144,22 +134,11 @@ public class MainActivity extends Activity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    System.out.println(view.getHeight());
-                    System.out.println(view.getWidth());
-                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
-                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
-                    System.out.println(motionEvent.getX());
-                    System.out.println(motionEvent.getY());
-                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    Bitmap button = makeBitmap((VectorDrawable)((ImageView)view).getDrawable());
                     double ratio = (button.getHeight()/view.getHeight());
                     int x = ((int)(motionEvent.getX()*(ratio)));
                     int y =((int)(motionEvent.getY()*(ratio)));
-                    System.out.println(x);
-                    System.out.println(y);
-                    System.out.println(button.getHeight());
-                    System.out.println(button.getWidth());
                     pixel = button.getPixel(x,y);
-                    System.out.println(pixel);
                 }
                 return false;
             }
@@ -172,7 +151,6 @@ public class MainActivity extends Activity {
                 }else {
                     Random randNum = new Random();
                     int randomAlb = randNum.nextInt(albumList.size());
-                    System.out.println(randomAlb);
                     Album randAlb = albumMap.get(albumList.get(randomAlb));
                     Uri randIm = Uri.parse(randAlb.getImages().get(randNum.nextInt(randAlb.getImages().size())));
                     Bitmap newBm = loadBitmap(randIm);
@@ -186,22 +164,11 @@ public class MainActivity extends Activity {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    System.out.println(view.getHeight());
-                    System.out.println(view.getWidth());
-                    System.out.println(aButton.getDrawable().getIntrinsicHeight());
-                    System.out.println(aButton.getDrawable().getIntrinsicWidth());
-                    System.out.println(motionEvent.getX());
-                    System.out.println(motionEvent.getY());
-                    Bitmap button = ((BitmapDrawable)((ImageView)view).getDrawable()).getBitmap();
+                    Bitmap button = makeBitmap((VectorDrawable) ((ImageView)view).getDrawable());
                     double ratio = (button.getHeight()/view.getHeight());
                     int x = ((int)(motionEvent.getX()*(ratio)));
                     int y =((int)(motionEvent.getY()*(ratio)));
-                    System.out.println(x);
-                    System.out.println(y);
-                    System.out.println(button.getHeight());
-                    System.out.println(button.getWidth());
                     pixel = button.getPixel(x,y);
-                    System.out.println(pixel);
                 }
                 return false;
             }
@@ -345,7 +312,6 @@ public class MainActivity extends Activity {
             albumCreated();
         }else if(resultCode == RESULT_OK && requestCode == ALBUM_BACK_OUT){
                 Album updatedAlbum = (Album)data.getSerializableExtra("ALBUM");
-                System.out.println(updatedAlbum.getImages().size());
                 String name = data.getStringExtra("NAME");
                 albumMap.remove(name);
                 albumMap.put(name,updatedAlbum);
@@ -544,6 +510,20 @@ public class MainActivity extends Activity {
             actualView.setRadius(20);
             actualView.setLayoutParams(new GridView.LayoutParams(width/4, height/4));
             return actualView;
+        }
+    }
+    private Bitmap makeBitmap(VectorDrawable vd){
+        try {
+            Bitmap bitmap;
+
+            bitmap = Bitmap.createBitmap(vd.getIntrinsicWidth(), vd.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+
+            Canvas canvas = new Canvas(bitmap);
+            vd.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            vd.draw(canvas);
+            return bitmap;
+        } catch (OutOfMemoryError e) {
+            return null;
         }
     }
 }
